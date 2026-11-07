@@ -1,10 +1,12 @@
 const tag = 'heating-card';
+const defaultFlameThreshold = 0.5;
 const editorLabels = {
   entity: 'Thermostat',
   weather_entity: 'Weather entity',
   controls: 'Enable thermostat controls',
   show_eco: 'Show Eco button',
   show_weather: 'Show weather icon',
+  flame_threshold: 'Flame start temperature difference',
 };
 const weatherIcons = {
   sunny: 'weather-sunny', clear: 'weather-sunny', 'clear-night': 'weather-night',
@@ -30,8 +32,13 @@ class HeatingCard extends HTMLElement {
         .weather { left:12%; top:15%; color:var(--state-weather-sunny-color,#dfa43b); }
         .flame { left:12%; top:50%; opacity:.25; }
         .flame.active { color:var(--heating-card-accent,#ff8a00); opacity:1;
-          animation:flicker 1.2s ease-in-out infinite alternate; }
-        @keyframes flicker { to { transform:translate(-50%,-54%) rotate(4deg) scale(1.1); } }
+          filter:drop-shadow(0 0 .8cqw #ff8a00);
+          animation:flicker .9s ease-in-out infinite alternate; }
+        @keyframes flicker {
+          0% { transform:translate(-50%,-50%) scale(1) rotate(-3deg); }
+          50% { transform:translate(-50%,-54%) scale(1.16) rotate(2deg); }
+          100% { transform:translate(-50%,-50%) scale(.97) rotate(4deg); }
+        }
         @media (prefers-reduced-motion:reduce) { .flame.active { animation:none; } }
         .target { position:absolute; top:24%; right:31%; display:flex; gap:2cqw; }
         .whole { font-size:30cqw; line-height:.9; font-weight:200; letter-spacing:-.5cqw; }
@@ -90,8 +97,13 @@ class HeatingCard extends HTMLElement {
         { name: 'controls', default: false, selector: { boolean: {} } },
         { name: 'show_eco', default: true, selector: { boolean: {} } },
         { name: 'show_weather', default: true, selector: { boolean: {} } },
+        { name: 'flame_threshold', default: defaultFlameThreshold,
+          selector: { number: { min: 0, step: 0.1, mode: 'box' } } },
       ],
       computeLabel: field => editorLabels[field.name],
+      computeHelper: field => field.name === 'flame_threshold'
+        ? 'Uses your Home Assistant temperature unit. The flame stops when the room reaches the target.'
+        : undefined,
     };
   }
 
@@ -99,6 +111,14 @@ class HeatingCard extends HTMLElement {
     if (typeof config?.entity !== 'string' || !/^climate\.[a-z0-9_]+$/.test(config.entity)) {
       throw new Error('Choose a climate entity for Glow Minimalist Thermostat Card.');
     }
+    const threshold = config.flame_threshold ?? defaultFlameThreshold;
+    if (!Number.isFinite(threshold) || threshold < 0) {
+      throw new Error('The flame start temperature difference must be zero or greater.');
+    }
+    if (this.config?.entity !== config.entity || this.flameThreshold !== threshold) {
+      this.flameActive = false;
+    }
+    this.flameThreshold = threshold;
     this.config = config;
     this.render();
   }
@@ -131,14 +151,20 @@ class HeatingCard extends HTMLElement {
     root.querySelector('.target').setAttribute('aria-label',
       target === null ? 'Target temperature unavailable' : `Target temperature ${formatter.format(target)} ${unit}`);
     const room = root.querySelector('.room-value');
-    room.textContent = Number.isFinite(attrs.current_temperature) ? `${formatter.format(attrs.current_temperature)} ${unit}` : '–';
+    const current = attrs.current_temperature;
+    room.textContent = Number.isFinite(current) ? `${formatter.format(current)} ${unit}` : '–';
     room.setAttribute('aria-label', `Room temperature ${room.textContent}`);
     const weatherIcon = root.querySelector('.weather');
     weatherIcon.hidden = this.config.show_weather === false;
     if (!weatherIcon.hidden) {
       weatherIcon.setAttribute('icon', `mdi:${weatherIcons[weather?.state] ?? 'weather-partly-cloudy'}`);
     }
-    root.querySelector('.flame').classList.toggle('active', attrs.hvac_action === 'heating');
+    const heatingMode = ['heat', 'auto', 'heat_cool'].includes(climate?.state) && attrs.hvac_action !== 'cooling';
+    const gap = target !== null && Number.isFinite(current)
+      ? Math.round((target - current) * 1e6) / 1e6
+      : 0;
+    this.flameActive = heatingMode && gap > 0 && (this.flameActive || gap >= this.flameThreshold);
+    root.querySelector('.flame').classList.toggle('active', this.flameActive);
 
     const available = this.config.controls === true && climate && !['unavailable', 'unknown'].includes(climate.state);
     const modes = attrs.hvac_modes ?? [];
