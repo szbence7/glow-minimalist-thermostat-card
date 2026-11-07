@@ -44,12 +44,13 @@ flame_threshold: 0.5
 | `weather_entity` | Optional | A weather entity for the weather icon. The card uses a partly cloudy icon by default. |
 | `controls` | On for cards added through the picker | Enables supported controls on the right. For YAML configurations, set `controls: true` to enable them. |
 | `show_eco` | `true` | Shows the Eco button. |
+| `eco_script` | Optional | A `script.*` entity to run when you press the Eco button. |
 | `show_weather` | `true` | Shows the weather icon. |
-| `flame_threshold` | `0.5` | Minimum difference between target and room temperature that starts the flame, in your Home Assistant temperature unit. |
+| `flame_threshold` | `0.5` | Temperature difference at which your thermostat switches on, in your Home Assistant temperature unit. Used for the card display. |
 
 In a heating-capable mode, the flame starts when the room is cooler than the target by at least the configured difference. Once lit, it stays on until the room reaches the target, or the thermostat switches away from heating. Set the difference to `0` to start the flame for any positive gap. This setting only changes the card's display. Configure the thermostat itself to change when the heating comes on.
 
-The power button switches between Heat and Off when the thermostat offers both modes. The leaf toggles Eco when the thermostat offers the Eco and None presets. The chevrons use the thermostat’s advertised step and limits. The display uses Home Assistant’s configured temperature unit and locale.
+The power button switches between Heat and Off when the thermostat offers both modes. The leaf toggles Eco when the thermostat offers Eco and either the None preset or a single alternative preset. If you use a script to toggle Eco, select it under **Eco toggle script** in the card editor. The chevrons use the thermostat’s advertised step and limits. The display uses Home Assistant’s configured temperature unit and locale.
 
 ## What’s new
 
