@@ -1,4 +1,11 @@
 const tag = 'heating-card';
+const editorLabels = {
+  entity: 'Thermostat',
+  weather_entity: 'Weather entity',
+  controls: 'Enable thermostat controls',
+  show_eco: 'Show Eco button',
+  show_weather: 'Show weather icon',
+};
 const weatherIcons = {
   sunny: 'weather-sunny', clear: 'weather-sunny', 'clear-night': 'weather-night',
   cloudy: 'weather-cloudy', partlycloudy: 'weather-partly-cloudy',
@@ -15,6 +22,7 @@ class HeatingCard extends HTMLElement {
     this.attachShadow({ mode: 'open' }).innerHTML = `
       <style>
         :host { display:block; }
+        [hidden] { display:none !important; }
         ha-card { container-type:inline-size; overflow:hidden; }
         .panel { position:relative; aspect-ratio:25/17; color:var(--primary-text-color,#20242b); }
         .icon { position:absolute; display:grid; place-items:center; transform:translate(-50%,-50%);
@@ -36,7 +44,7 @@ class HeatingCard extends HTMLElement {
         .rail::before { content:''; position:absolute; inset:0 -1px; border-radius:inherit;
           background:inherit; filter:blur(3px); }
         .controls { position:absolute; inset:3.5% 2.5% 3.5% 80.5%; display:grid;
-          grid-template-rows:repeat(4,1fr); justify-items:center; align-items:center; }
+          grid-auto-rows:1fr; justify-items:center; align-items:center; }
         button { width:100%; height:100%; border:0; padding:0; background:transparent;
           color:inherit; display:grid; place-items:center; --mdc-icon-size:6.5cqw; cursor:pointer; }
         button:disabled { opacity:.35; cursor:default; }
@@ -70,12 +78,26 @@ class HeatingCard extends HTMLElement {
     const entities = Object.keys(hass?.states ?? {});
     const entity = entities.find(id => id.startsWith('climate.')) ?? 'climate.thermostat';
     const weather_entity = entities.find(id => id.startsWith('weather.'));
-    return weather_entity ? { entity, weather_entity } : { entity };
+    const config = { entity, controls: true, show_eco: true, show_weather: true };
+    return weather_entity ? { ...config, weather_entity } : config;
+  }
+
+  static getConfigForm() {
+    return {
+      schema: [
+        { name: 'entity', required: true, selector: { entity: { domain: 'climate' } } },
+        { name: 'weather_entity', selector: { entity: { domain: 'weather' } } },
+        { name: 'controls', default: false, selector: { boolean: {} } },
+        { name: 'show_eco', default: true, selector: { boolean: {} } },
+        { name: 'show_weather', default: true, selector: { boolean: {} } },
+      ],
+      computeLabel: field => editorLabels[field.name],
+    };
   }
 
   setConfig(config) {
     if (typeof config?.entity !== 'string' || !/^climate\.[a-z0-9_]+$/.test(config.entity)) {
-      throw new Error('Choose a climate entity for Heating Card.');
+      throw new Error('Choose a climate entity for Glow Thermostat Card.');
     }
     this.config = config;
     this.render();
@@ -111,7 +133,11 @@ class HeatingCard extends HTMLElement {
     const room = root.querySelector('.room-value');
     room.textContent = Number.isFinite(attrs.current_temperature) ? `${formatter.format(attrs.current_temperature)} ${unit}` : '–';
     room.setAttribute('aria-label', `Room temperature ${room.textContent}`);
-    root.querySelector('.weather').setAttribute('icon', `mdi:${weatherIcons[weather?.state] ?? 'weather-partly-cloudy'}`);
+    const weatherIcon = root.querySelector('.weather');
+    weatherIcon.hidden = this.config.show_weather === false;
+    if (!weatherIcon.hidden) {
+      weatherIcon.setAttribute('icon', `mdi:${weatherIcons[weather?.state] ?? 'weather-partly-cloudy'}`);
+    }
     root.querySelector('.flame').classList.toggle('active', attrs.hvac_action === 'heating');
 
     const available = this.config.controls === true && climate && !['unavailable', 'unknown'].includes(climate.state);
@@ -125,7 +151,8 @@ class HeatingCard extends HTMLElement {
     power.classList.toggle('selected', climate?.state === 'heat');
     power.setAttribute('aria-pressed', String(climate?.state === 'heat'));
     const eco = root.querySelector('[data-control="eco"]');
-    eco.disabled = !available || !presets.includes('eco') || !presets.includes('none');
+    eco.hidden = this.config.show_eco === false;
+    eco.disabled = eco.hidden || !available || !presets.includes('eco') || !presets.includes('none');
     eco.classList.toggle('selected', attrs.preset_mode === 'eco');
     eco.setAttribute('aria-pressed', String(attrs.preset_mode === 'eco'));
     root.querySelector('[data-control="up"]').disabled = !adjustable || target >= attrs.max_temp;
@@ -164,7 +191,7 @@ if (!customElements.get(tag)) {
   window.customCards = window.customCards ?? [];
   window.customCards.push({
     type: tag,
-    name: 'Heating Card',
+    name: 'Glow Thermostat Card',
     description: 'A thermostat display with oversized temperatures and an amber accent.',
   });
 }
