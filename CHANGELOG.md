@@ -2,6 +2,14 @@
 
 All release notes use British English. Write a “What’s new” section for every GitHub release, and mirror it here.
 
+## 1.3.0
+
+### What’s new
+
+- Choose the temperature difference that starts the flame in the visual editor.
+- The flame glows and flickers when the target exceeds the room temperature by the configured amount, and goes out when the room reaches the target or heating is switched off.
+- The card can show the flame even when a thermostat does not report an active heating state. The setting affects the display only.
+
 ## 1.2.0
 
 ### What’s new
