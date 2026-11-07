@@ -1,10 +1,10 @@
-# Heating Card
+# Glow Thermostat Card
 
 [![HACS](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.dev/docs/faq/custom_repositories/)
 [![Release](https://img.shields.io/github/v/release/szbence7/heating-card)](https://github.com/szbence7/heating-card/releases)
 <a href="https://www.buymeacoffee.com/benceix"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" height="24" alt="Buy Me a Coffee"></a>
 
-Heating Card gives your Home Assistant thermostat an oversized target temperature, a room temperature readout and a slim amber divider. It follows your dashboard’s light or dark theme.
+Glow Thermostat Card is a Home Assistant dashboard card for climate entities. It gives your thermostat an oversized target temperature, a room temperature readout and a slim amber divider. It follows your dashboard’s light or dark theme.
 
 | Dark mode | Light mode |
 | --- | --- |
@@ -14,8 +14,8 @@ Heating Card gives your Home Assistant thermostat an oversized target temperatur
 
 1. In Home Assistant, open **HACS**. From the three-dot menu, choose **Custom repositories**.
 2. Enter `https://github.com/szbence7/heating-card` and select **Dashboard**.
-3. Open **Heating Card**, choose **Download** and refresh your browser.
-4. Edit your dashboard, choose **Add card**, then choose **Heating Card**. Open the code editor and configure your entities using the example below.
+3. Open **Glow Thermostat Card**, choose **Download** and refresh your browser.
+4. Edit your dashboard, choose **Add card**, then choose **Glow Thermostat Card**. Select your thermostat and, optionally, a weather entity from the lists. Use the switches to choose which controls and icons to show, then select **Save**.
 
 If you manage dashboard resources in YAML, add the downloaded file as a JavaScript module under your existing resources list.
 
@@ -30,14 +30,18 @@ If you manage dashboard resources in YAML, add the downloaded file as a JavaScri
 type: custom:heating-card
 entity: climate.living_room
 weather_entity: weather.home
-controls: false
+controls: true
+show_eco: true
+show_weather: true
 ```
 
 | Option | Default | Description |
 | --- | --- | --- |
 | `entity` | Required | A thermostat entity with a single target temperature. |
 | `weather_entity` | Optional | A weather entity for the weather icon. The card uses a partly cloudy icon by default. |
-| `controls` | `false` | Enables supported controls on the right. |
+| `controls` | On for cards added through the picker | Enables supported controls on the right. For YAML configurations, set `controls: true` to enable them. |
+| `show_eco` | `true` | Shows the Eco button. |
+| `show_weather` | `true` | Shows the weather icon. |
 
 The power button switches between Heat and Off when the thermostat offers both modes. The leaf toggles Eco when the thermostat offers the Eco and None presets. The chevrons use the thermostat’s advertised step and limits. The display uses Home Assistant’s configured temperature unit and locale.
 
