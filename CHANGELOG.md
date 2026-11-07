@@ -2,6 +2,15 @@
 
 All release notes use British English. Write a “What’s new” section for every GitHub release, and mirror it here.
 
+## 1.4.0
+
+### What’s new
+
+- Weather icons follow the Home Assistant theme colour for each condition, including a purple moon on clear nights.
+- The glowing amber divider uses the original artwork.
+- The editor asks for the temperature difference at which your thermostat switches on and explains how the card uses it.
+- The Eco button can run your own toggle script. Thermostats with Eco and one alternative preset can also toggle Eco directly.
+
 ## 1.3.0
 
 ### What’s new
