@@ -97,7 +97,7 @@ class HeatingCard extends HTMLElement {
 
   setConfig(config) {
     if (typeof config?.entity !== 'string' || !/^climate\.[a-z0-9_]+$/.test(config.entity)) {
-      throw new Error('Choose a climate entity for Glow Thermostat Card.');
+      throw new Error('Choose a climate entity for Glow Minimalist Thermostat Card.');
     }
     this.config = config;
     this.render();
@@ -191,7 +191,8 @@ if (!customElements.get(tag)) {
   window.customCards = window.customCards ?? [];
   window.customCards.push({
     type: tag,
-    name: 'Glow Thermostat Card',
+    name: 'Glow Minimalist Thermostat Card',
+    preview: true,
     description: 'A thermostat display with oversized temperatures and an amber accent.',
   });
 }
