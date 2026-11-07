@@ -35,6 +35,7 @@ weather_entity: weather.home
 controls: true
 show_eco: true
 show_weather: true
+flame_threshold: 0.5
 ```
 
 | Option | Default | Description |
@@ -44,6 +45,9 @@ show_weather: true
 | `controls` | On for cards added through the picker | Enables supported controls on the right. For YAML configurations, set `controls: true` to enable them. |
 | `show_eco` | `true` | Shows the Eco button. |
 | `show_weather` | `true` | Shows the weather icon. |
+| `flame_threshold` | `0.5` | Minimum difference between target and room temperature that starts the flame, in your Home Assistant temperature unit. |
+
+In a heating-capable mode, the flame starts when the room is cooler than the target by at least the configured difference. Once lit, it stays on until the room reaches the target, or the thermostat switches away from heating. Set the difference to `0` to start the flame for any positive gap. This setting only changes the card's display. Configure the thermostat itself to change when the heating comes on.
 
 The power button switches between Heat and Off when the thermostat offers both modes. The leaf toggles Eco when the thermostat offers the Eco and None presets. The chevrons use the thermostat’s advertised step and limits. The display uses Home Assistant’s configured temperature unit and locale.
 
