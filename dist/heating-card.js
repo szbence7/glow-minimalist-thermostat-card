@@ -84,6 +84,7 @@ class HeatingCard extends HTMLElement {
         button:disabled { opacity:.35; cursor:default; }
         button:focus-visible { outline:2px solid var(--primary-color,#1976d2); outline-offset:-3px; border-radius:10px; }
         .selected { color:var(--heating-card-accent,#ff8a00); }
+        [data-control="eco"].selected { color:var(--success-color,#2e7d32); }
       </style>
       <ha-card><div class="panel" role="group" aria-label="Heating">
         <ha-icon class="icon weather" aria-hidden="true"></ha-icon>
