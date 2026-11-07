@@ -1,10 +1,10 @@
-# Glow Thermostat Card
+# Glow Minimalist Thermostat Card
 
 [![HACS](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.dev/docs/faq/custom_repositories/)
-[![Release](https://img.shields.io/github/v/release/szbence7/heating-card)](https://github.com/szbence7/heating-card/releases)
+[![Release](https://img.shields.io/github/v/release/szbence7/glow-minimalist-thermostat-card)](https://github.com/szbence7/glow-minimalist-thermostat-card/releases)
 <a href="https://www.buymeacoffee.com/benceix"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" height="24" alt="Buy Me a Coffee"></a>
 
-Glow Thermostat Card is a Home Assistant dashboard card for climate entities. It gives your thermostat an oversized target temperature, a room temperature readout and a slim amber divider. It follows your dashboard’s light or dark theme.
+Glow Minimalist Thermostat Card is a Home Assistant dashboard card for climate entities. It gives your thermostat an oversized target temperature, a room temperature readout and a slim amber divider. It follows your dashboard’s light or dark theme.
 
 | Dark mode | Light mode |
 | --- | --- |
@@ -13,16 +13,18 @@ Glow Thermostat Card is a Home Assistant dashboard card for climate entities. It
 ## Installation
 
 1. In Home Assistant, open **HACS**. From the three-dot menu, choose **Custom repositories**.
-2. Enter `https://github.com/szbence7/heating-card` and select **Dashboard**.
-3. Open **Glow Thermostat Card**, choose **Download** and refresh your browser.
-4. Edit your dashboard, choose **Add card**, then choose **Glow Thermostat Card**. Select your thermostat and, optionally, a weather entity from the lists. Use the switches to choose which controls and icons to show, then select **Save**.
+2. Enter `https://github.com/szbence7/glow-minimalist-thermostat-card` and select **Dashboard**.
+3. Open **Glow Minimalist Thermostat Card**, choose **Download** and refresh your browser.
+4. Edit your dashboard and choose **Add card**. Find the live preview for **Glow Minimalist Thermostat Card** and select it. Select your thermostat and, optionally, a weather entity from the lists. Use the switches to choose which controls and icons to show, then select **Save**.
 
 If you manage dashboard resources in YAML, add the downloaded file as a JavaScript module under your existing resources list.
 
 ```yaml
-- url: /hacsfiles/heating-card/heating-card.js
+- url: /hacsfiles/glow-minimalist-thermostat-card/heating-card.js
   type: module
 ```
+
+If you installed the card before the repository rename and manage resources yourself, check the resource URL after updating. Use the path where your installation placed `heating-card.js` and keep a single resource entry for the card.
 
 ## Configuration
 
@@ -47,4 +49,4 @@ The power button switches between Heat and Off when the thermostat offers both m
 
 ## What’s new
 
-See the [changelog](CHANGELOG.md) and [GitHub releases](https://github.com/szbence7/heating-card/releases).
+See the [changelog](CHANGELOG.md) and [GitHub releases](https://github.com/szbence7/glow-minimalist-thermostat-card/releases).
