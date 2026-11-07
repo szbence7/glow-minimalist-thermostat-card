@@ -6,17 +6,47 @@ const editorLabels = {
   controls: 'Enable thermostat controls',
   show_eco: 'Show Eco button',
   show_weather: 'Show weather icon',
-  flame_threshold: 'Flame start temperature difference',
+  flame_threshold: 'Temperature difference at which your thermostat switches on',
+  eco_script: 'Eco toggle script',
 };
 const weatherIcons = {
-  sunny: 'weather-sunny', clear: 'weather-sunny', 'clear-night': 'weather-night',
-  cloudy: 'weather-cloudy', partlycloudy: 'weather-partly-cloudy',
-  rainy: 'weather-rainy', pouring: 'weather-pouring', snowy: 'weather-snowy',
-  'snowy-rainy': 'weather-snowy-rainy', fog: 'weather-fog', hail: 'weather-hail',
-  lightning: 'weather-lightning', 'lightning-rainy': 'weather-lightning-rainy',
-  windy: 'weather-windy', 'windy-variant': 'weather-windy-variant',
-  exceptional: 'alert-circle-outline',
+  sunny: ['weather-sunny', '#ffc107'],
+  'clear-night': ['weather-night', '#9575cd'],
+  cloudy: ['weather-cloudy', '#bdbdbd'],
+  partlycloudy: ['weather-partly-cloudy', '#78909c'],
+  rainy: ['weather-rainy', '#2196f3'],
+  pouring: ['weather-pouring', '#3f51b5'],
+  snowy: ['weather-snowy', '#c0e0ff'],
+  'snowy-rainy': ['weather-snowy-rainy', '#03a9f4'],
+  fog: ['weather-fog', '#9e9e9e'],
+  hail: ['weather-hail', '#00bcd4'],
+  lightning: ['weather-lightning', '#ffeb3b'],
+  'lightning-rainy': ['weather-lightning-rainy', '#cddc39'],
+  windy: ['weather-windy', '#4caf50'],
+  'windy-variant': ['weather-windy-variant', '#4caf50'],
+  exceptional: ['alert-circle-outline', '#f44336'],
 };
+const dividerSvg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 340'>
+  <defs>
+    <linearGradient id='o' x1='0' y1='0' x2='0' y2='1'>
+      <stop offset='0' stop-color='#ff8a00' stop-opacity='.1'/>
+      <stop offset='.5' stop-color='#ff9a1a'/>
+      <stop offset='1' stop-color='#ff8a00' stop-opacity='.1'/>
+    </linearGradient>
+    <filter id='b'><feGaussianBlur stdDeviation='3'/></filter>
+  </defs>
+  <rect width='500' height='340' fill='none'/>
+  <rect x='396' y='34' width='5' height='272' rx='2.5' fill='url(#o)' filter='url(#b)'/>
+  <rect x='397' y='34' width='3' height='272' rx='1.5' fill='url(#o)'/>
+</svg>`;
+
+function getEcoPreset(attrs) {
+  const presets = attrs.preset_modes ?? [];
+  if (!presets.includes('eco')) return undefined;
+  const alternatives = presets.filter(preset => preset !== 'eco');
+  const exit = alternatives.includes('none') ? 'none' : alternatives.length === 1 ? alternatives[0] : undefined;
+  return exit === undefined || attrs.preset_mode === 'eco' ? exit : 'eco';
+}
 
 class HeatingCard extends HTMLElement {
   constructor() {
@@ -29,7 +59,7 @@ class HeatingCard extends HTMLElement {
         .panel { position:relative; aspect-ratio:25/17; color:var(--primary-text-color,#20242b); }
         .icon { position:absolute; display:grid; place-items:center; transform:translate(-50%,-50%);
           --mdc-icon-size:6.5cqw; }
-        .weather { left:12%; top:15%; color:var(--state-weather-sunny-color,#dfa43b); }
+        .weather { left:12%; top:15%; --mdc-icon-size:7.5cqw; }
         .flame { left:12%; top:50%; opacity:.25; }
         .flame.active { color:var(--heating-card-accent,#ff8a00); opacity:1;
           filter:drop-shadow(0 0 .8cqw #ff8a00);
@@ -46,10 +76,7 @@ class HeatingCard extends HTMLElement {
         .room { position:absolute; left:6%; top:84%; transform:translateY(-50%);
           display:flex; align-items:center; gap:2cqw; font-size:5.5cqw;
           --mdc-icon-size:5.5cqw; color:var(--secondary-text-color,#515967); }
-        .rail { position:absolute; left:79.5%; top:10%; bottom:10%; width:.65cqw; border-radius:99px;
-          background:linear-gradient(transparent,var(--heating-card-accent,#ff8a00),transparent); }
-        .rail::before { content:''; position:absolute; inset:0 -1px; border-radius:inherit;
-          background:inherit; filter:blur(3px); }
+        .rail { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
         .controls { position:absolute; inset:3.5% 2.5% 3.5% 80.5%; display:grid;
           grid-auto-rows:1fr; justify-items:center; align-items:center; }
         button { width:100%; height:100%; border:0; padding:0; background:transparent;
@@ -67,7 +94,7 @@ class HeatingCard extends HTMLElement {
         <div class="room"><ha-icon icon="mdi:home-thermometer-outline" aria-hidden="true"></ha-icon>
           <span class="room-value"></span>
         </div>
-        <div class="rail" aria-hidden="true"></div>
+        <img class="rail" alt="" src="data:image/svg+xml,${encodeURIComponent(dividerSvg)}">
         <div class="controls">
           <button type="button" data-control="power" aria-label="Toggle heating"><ha-icon icon="mdi:power"></ha-icon></button>
           <button type="button" data-control="eco" aria-label="Toggle economy preset"><ha-icon icon="mdi:leaf"></ha-icon></button>
@@ -96,14 +123,16 @@ class HeatingCard extends HTMLElement {
         { name: 'weather_entity', selector: { entity: { domain: 'weather' } } },
         { name: 'controls', default: false, selector: { boolean: {} } },
         { name: 'show_eco', default: true, selector: { boolean: {} } },
+        { name: 'eco_script', selector: { entity: { domain: 'script' } } },
         { name: 'show_weather', default: true, selector: { boolean: {} } },
         { name: 'flame_threshold', default: defaultFlameThreshold,
           selector: { number: { min: 0, step: 0.1, mode: 'box' } } },
       ],
       computeLabel: field => editorLabels[field.name],
-      computeHelper: field => field.name === 'flame_threshold'
-        ? 'Uses your Home Assistant temperature unit. The flame stops when the room reaches the target.'
-        : undefined,
+      computeHelper: field => ({
+        flame_threshold: 'Enter the difference used by your thermostat, in your Home Assistant temperature unit. This card uses it for the display only.',
+        eco_script: 'Optional. Runs your own Eco toggle script when you press the Eco button.',
+      })[field.name],
     };
   }
 
@@ -157,7 +186,11 @@ class HeatingCard extends HTMLElement {
     const weatherIcon = root.querySelector('.weather');
     weatherIcon.hidden = this.config.show_weather === false;
     if (!weatherIcon.hidden) {
-      weatherIcon.setAttribute('icon', `mdi:${weatherIcons[weather?.state] ?? 'weather-partly-cloudy'}`);
+      const condition = weather?.state === 'clear' ? 'sunny' : weather?.state;
+      const state = Object.hasOwn(weatherIcons, condition) ? condition : 'partlycloudy';
+      const [icon, fallback] = weatherIcons[state];
+      weatherIcon.setAttribute('icon', weather?.attributes?.icon ?? `mdi:${icon}`);
+      weatherIcon.style.color = `var(--state-weather-${state.replaceAll('-', '_')}-color, ${fallback})`;
     }
     const heatingMode = ['heat', 'auto', 'heat_cool'].includes(climate?.state) && attrs.hvac_action !== 'cooling';
     const gap = target !== null && Number.isFinite(current)
@@ -168,7 +201,6 @@ class HeatingCard extends HTMLElement {
 
     const available = this.config.controls === true && climate && !['unavailable', 'unknown'].includes(climate.state);
     const modes = attrs.hvac_modes ?? [];
-    const presets = attrs.preset_modes ?? [];
     const step = attrs.target_temp_step;
     const adjustable = available && target !== null && Number.isFinite(step) && step > 0 &&
       Number.isFinite(attrs.min_temp) && Number.isFinite(attrs.max_temp);
@@ -178,7 +210,11 @@ class HeatingCard extends HTMLElement {
     power.setAttribute('aria-pressed', String(climate?.state === 'heat'));
     const eco = root.querySelector('[data-control="eco"]');
     eco.hidden = this.config.show_eco === false;
-    eco.disabled = eco.hidden || !available || !presets.includes('eco') || !presets.includes('none');
+    const script = hass.states[this.config.eco_script];
+    const ecoAvailable = this.config.eco_script
+      ? script && !['unavailable', 'unknown'].includes(script.state)
+      : getEcoPreset(attrs) !== undefined;
+    eco.disabled = eco.hidden || !available || !ecoAvailable;
     eco.classList.toggle('selected', attrs.preset_mode === 'eco');
     eco.setAttribute('aria-pressed', String(attrs.preset_mode === 'eco'));
     root.querySelector('[data-control="up"]').disabled = !adjustable || target >= attrs.max_temp;
@@ -188,23 +224,31 @@ class HeatingCard extends HTMLElement {
 
   runControl(control) {
     const hass = this.homeAssistant;
-    const entity_id = this.config.entity;
+    let entity_id = this.config.entity;
     const climate = hass.states[entity_id];
     const attrs = climate.attributes;
+    let domain = 'climate';
     let service;
     let value;
     if (control === 'power') {
       service = 'set_hvac_mode';
       value = { hvac_mode: climate.state === 'off' ? 'heat' : 'off' };
     } else if (control === 'eco') {
-      service = 'set_preset_mode';
-      value = { preset_mode: attrs.preset_mode === 'eco' ? 'none' : 'eco' };
+      if (this.config.eco_script) {
+        domain = 'script';
+        service = 'turn_on';
+        entity_id = this.config.eco_script;
+        value = {};
+      } else {
+        service = 'set_preset_mode';
+        value = { preset_mode: getEcoPreset(attrs) };
+      }
     } else {
       service = 'set_temperature';
       const next = attrs.temperature + (control === 'up' ? 1 : -1) * attrs.target_temp_step;
       value = { temperature: Number(Math.min(attrs.max_temp, Math.max(attrs.min_temp, next)).toFixed(6)) };
     }
-    Promise.resolve(hass.callService('climate', service, { entity_id, ...value })).catch(error => {
+    Promise.resolve(hass.callService(domain, service, { entity_id, ...value })).catch(error => {
       this.dispatchEvent(new CustomEvent('hass-notification', {
         bubbles: true, composed: true, detail: { message: error.message },
       }));
