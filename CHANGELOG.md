@@ -2,6 +2,12 @@
 
 All release notes use British English. Write a “What’s new” section for every GitHub release, and mirror it here.
 
+## 1.4.1
+
+### What’s new
+
+- The leaf icon turns green when the thermostat reports that Eco is active.
+
 ## 1.4.0
 
 ### What’s new
