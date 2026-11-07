@@ -2,6 +2,13 @@
 
 All release notes use British English. Write a “What’s new” section for every GitHub release, and mirror it here.
 
+## 1.2.0
+
+### What’s new
+
+- See a live preview of the card in the dashboard card picker before adding it.
+- The card and its GitHub repository now use the Glow Minimalist Thermostat Card name. Existing dashboard configurations still use `custom:heating-card`.
+
 ## 1.1.0
 
 ### What’s new
